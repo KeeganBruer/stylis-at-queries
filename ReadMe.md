@@ -26,10 +26,11 @@ yarn add stylis-at-queries
 
 ## Usage
 
-To use `stylis-at-queries` with styled-components, import and add it as a plugin when creating your styled-components theme:
+### Configure
+To use `stylis-at-queries` with styled-components, import and add it as a plugin to the StyleSheetManager when creating your styled-components theme:
 
 ```javascript
-import { createGlobalStyle } from 'styled-components';
+import { createGlobalStyle, StyleSheetManager } from 'styled-components';
 import { stylisAtQueries } from 'stylis-at-queries';
 
 const GlobalStyle = createGlobalStyle`
@@ -37,24 +38,30 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const theme = {
+  mobile_size: "600px",
   /* Your theme configuration */
 };
 
+const atQueries = stylisAtQueries();
+
 const App = () => (
   <>
-    <GlobalStyle />
-    {/* Your application components */}
+    <StyleSheetManager stylisPlugins={[atQueries.plugin]}>
+      <ThemeProvider theme={theme}>
+        <GlobalStyle />
+        {/* Your application components */}
+      </ThemeProvider>
+    </StyleSheetManager>
   </>
 );
 
 export default App;
 ```
 
-## Example
-
+### Component Example
+Once configured, you can use `stylis-at-queries` directly within your styled components to apply styles conditionally based on custom queries. Here’s an example:
 ```javascript
 import styled from 'styled-components';
-import { stylisAtQueries } from 'stylis-at-queries';
 
 const Button = styled.button`
   background-color: blue;
@@ -73,19 +80,40 @@ export default Button;
 
 ## Custom Queries
 
-`stylis-at-queries` allows you to define and transform custom `@` queries to suit your application's needs. Simply add new query handlers to the `stylisAtQueries` function to extend functionality:
+`stylis-at-queries` allows you to define and transform custom `@` queries to suit your application's needs. Simply add new query handlers to the object created by the `stylisAtQueries` function to extend functionality:
 
 ```javascript
+import { createGlobalStyle, StyleSheetManager } from 'styled-components';
 import { stylisAtQueries } from 'stylis-at-queries';
 
-stylisAtQueries.add('@isMobile', (node) => {
+const GlobalStyle = createGlobalStyle`
+  /* Your global styles here */
+`;
+
+const theme = {
+  mobile_size: "600px",
+  /* Your theme configuration */
+};
+
+const atQueries = stylisAtQueries();
+atQueries.add('@screenSize', (element, content) => {
   // Custom transformation logic
 });
 
-stylisAtQueries.add('@isPrint', (node) => {
-  // Custom transformation logic
-});
+const App = () => (
+  <>
+    <StyleSheetManager stylisPlugins={[atQueries.plugin]}>
+      <ThemeProvider theme={theme}>
+        <GlobalStyle />
+        {/* Your application components */}
+      </ThemeProvider>
+    </StyleSheetManager>
+  </>
+);
+
+export default App;
 ```
+
 
 ## License
 
