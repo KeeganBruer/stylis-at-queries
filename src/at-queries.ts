@@ -14,6 +14,40 @@ import {
 
 type MiddlewareParams = Parameters<Middleware>;
 type StylisElement = MiddlewareParams[0];
+type AtQueryTransformer = (element: StylisElement, content: string) => string
+export function stylisAtQueries() {
+  let queries: {
+    [key:string]:AtQueryTransformer
+  } = {
+    "@isMobile": (element: StylisElement, content: string) => {
+      return `
+      @media screen and (max-width: 600px) {
+        ${getClosestParentRule(element)} {
+          ${content}
+        }
+      }
+      `
+    }
+  }
+  const add = (key:string, func:AtQueryTransformer) => {
+    queries[key] = func;
+  }
+  return {
+    add,
+    plugin: (
+      element: StylisElement,
+      index: MiddlewareParams[1],
+      children: MiddlewareParams[2],
+      callback: MiddlewareParams[3]
+    )=>stylisAtQueriesPlugin(queries, element, index, children, callback)
+  }
+}
+
+// stable identifier that will not be dropped by minification unless the whole module
+// is unused
+Object.defineProperty(stylisAtQueries, 'name', { value: 'stylisAtQueries' });
+
+
 
 function stringifyElement(
   element: StylisElement,
@@ -37,30 +71,18 @@ function stringifyElements(
   return rtn;
 }
 
-const Queries: {
-  [key:string]:(element:StylisElement, content:string)=> StylisElement
-} = {
-  "@isMobile": (element: StylisElement, content: string) => {
-    let str = `
-    @media screen and (max-width: 600px) {
-      ${getClosestParentRule(element)} {
-        ${content}
-      }
-    }
-    `
-    let elements = compile(str);
-    console.log("elements",str, elements[0])
-    return elements[0]
-  }
-}
-const QueryKeys = Object.keys(Queries);
-
 function stylisAtQueriesPlugin(
+  queries: {
+    [key:string]:(element:StylisElement, content:string)=> string
+  },
   element: StylisElement,
   index: MiddlewareParams[1],
   children: MiddlewareParams[2],
   callback: MiddlewareParams[3]
 ): string | void {
+
+  const QueryKeys = Object.keys(queries);
+
   for (let i = 0; i < QueryKeys.length; i++) {
     if (element.type != QueryKeys[i]) continue;
     let stringifiedContent = ""
@@ -70,7 +92,10 @@ function stylisAtQueriesPlugin(
       stringifiedContent = stringifyElements(element.children);
     }
     console.log("Found", QueryKeys[i], stringifiedContent)
-    let newElement = Queries[QueryKeys[i]](element, stringifiedContent)
+    let element_str = queries[QueryKeys[i]](element, stringifiedContent)
+    let elements = compile(element_str);
+    console.log("elements", element_str, elements[0])
+    let newElement = elements[0];
     element.type = newElement.type;
     element.return = newElement.return;
     element.value = newElement.value;
@@ -91,13 +116,6 @@ function getClosestParentRule(element:StylisElement) {
   if (ele != null) return ele.value;
   return ""
 }
-
-// stable identifier that will not be dropped by minification unless the whole module
-// is unused
-Object.defineProperty(stylisAtQueriesPlugin, 'name', { value: 'stylisAtQueriesPlugin' });
-
-export default stylisAtQueriesPlugin;
-
 
 
 function screenWidthLessThan(size:string, ...content: string[]) {
