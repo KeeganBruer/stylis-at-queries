@@ -1,0 +1,50 @@
+{
+  "name": "stylis-at-queries",
+  "version": "0.0.1",
+  "description": "",
+  "module": "dist/stylis-at-queries.js",
+  "main": "dist/cjs/stylis-at-queries.js",
+  "types": "dist/stylis-at-queries.d.ts",
+  "scripts": {
+    "build": "tsc && tsc --module commonjs --outDir dist/cjs",
+    "prepublishOnly": "npm build",
+    "test": "jest"
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KeeganBruer/stylis-at-queries.git"
+  },
+  "keywords": [
+    "stylis",
+    "css",
+    "preprocessor",
+    "styled-components"
+  ],
+  "author": "Keegan Bruer",
+  "contributors": [
+    "Keegan Bruer <keegan.bruer@gmail.com> (https://keeganbruer.com)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KeeganBruer/stylis-at-queries/issues"
+  },
+  "homepage": "https://github.com/KeeganBruer/stylis-at-queries.git",
+  "peerDependencies": {
+    "stylis": "4.x"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.2",
+    "@types/stylis": "^4.0.2",
+    "jest": "^27.3.1",
+    "prettier": "^2.4.1",
+    "stylis": "^4.0.13",
+    "ts-jest": "^27.0.7",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+  }
+}
