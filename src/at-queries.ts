@@ -1,3 +1,4 @@
+import { DefaultTheme } from 'styled-components';
 import {
   COMMENT,
   compile,
@@ -12,25 +13,33 @@ import {
   SUPPORTS,
 } from 'stylis';
 
+//Define Common Types
 type MiddlewareParams = Parameters<Middleware>;
 type StylisElement = MiddlewareParams[0];
-type AtQueryTransformer = (element: StylisElement, content: string) => string
-export function stylisAtQueries() {
+type AtQueryTransformer = (element: StylisElement, content: string, theme:DefaultTheme) => string
+type ThemeConfig = DefaultTheme | { mobile_size: string }
+
+export function stylisAtQueries(_theme?:Partial<ThemeConfig>) {
   let queries: {
     [key:string]:AtQueryTransformer
-  } = {
-    "@isMobile": (element: StylisElement, content: string) => {
-      return `
-      @media screen and (max-width: 600px) {
-        ${getClosestParentRule(element)} {
-          ${content}
-        }
-      }
-      `
-    }
-  }
+  } = {}
+
   const add = (key:string, func:AtQueryTransformer) => {
     queries[key] = func;
+  }
+
+  add("@isMobile", (element, content, theme) => {
+    return `
+    @media screen and (max-width: ${theme.mobile_size}) {
+      ${getClosestParentRule(element)} {
+        ${content}
+      }
+    }
+    `
+  });
+  const definedTheme:ThemeConfig = {
+    mobile_size: "600px",
+    ..._theme,
   }
   return {
     add,
@@ -39,12 +48,11 @@ export function stylisAtQueries() {
       index: MiddlewareParams[1],
       children: MiddlewareParams[2],
       callback: MiddlewareParams[3]
-    )=>stylisAtQueriesPlugin(queries, element, index, children, callback)
+    )=>stylisAtQueriesPlugin(definedTheme, queries, element, index, children, callback)
   }
 }
 
-// stable identifier that will not be dropped by minification unless the whole module
-// is unused
+// stable identifier that will not be dropped by minification unless the whole module is unused
 Object.defineProperty(stylisAtQueries, 'name', { value: 'stylisAtQueries' });
 
 
@@ -72,8 +80,9 @@ function stringifyElements(
 }
 
 function stylisAtQueriesPlugin(
+  theme:DefaultTheme,
   queries: {
-    [key:string]:(element:StylisElement, content:string)=> string
+    [key:string]:AtQueryTransformer
   },
   element: StylisElement,
   index: MiddlewareParams[1],
@@ -85,17 +94,21 @@ function stylisAtQueriesPlugin(
 
   for (let i = 0; i < QueryKeys.length; i++) {
     if (element.type != QueryKeys[i]) continue;
+
+    //Convert children to string
     let stringifiedContent = ""
     if (typeof element.children[0] == "string") {
       stringifiedContent = element.children[0]
     } else {
       stringifiedContent = stringifyElements(element.children);
     }
-    console.log("Found", QueryKeys[i], stringifiedContent)
-    let element_str = queries[QueryKeys[i]](element, stringifiedContent)
+
+    //convert string to node
+    let element_str = queries[QueryKeys[i]](element, stringifiedContent, theme)
     let elements = compile(element_str);
-    console.log("elements", element_str, elements[0])
     let newElement = elements[0];
+
+    //replace element content
     element.type = newElement.type;
     element.return = newElement.return;
     element.value = newElement.value;
@@ -104,7 +117,6 @@ function stylisAtQueriesPlugin(
     element.line = newElement.line;
     element.column = newElement.column;
     element.length = newElement.length;
-    console.log(element, element.children)
   }
 }
 
@@ -115,42 +127,4 @@ function getClosestParentRule(element:StylisElement) {
   }
   if (ele != null) return ele.value;
   return ""
-}
-
-
-function screenWidthLessThan(size:string, ...content: string[]) {
-  return `
-  @media screen and (max-width: ${size}) {
-    & {
-      ${content.join("")}
-    }
-  }
-  `
-}
-function screenWidthGreaterThan(size:string, ...content: string[]) {
-  return `
-  @media screen and (min-width: ${size}) {
-    & {
-      ${content.join("")}
-    }
-  }
-  `
-}
-function screenHeightLessThan(size:string, ...content: string[]):string {
-  return `
-  @media screen and (max-height: ${size}) {
-    & {
-      ${content.join("")}
-    }
-  }
-  `
-}
-function screenHeightGreaterThan(size:string, ...content: string[]) {
-  return `
-  @media screen and (min-height: ${size}) {
-    & {
-      ${content.join("")}
-    }
-  }
-  `
 }

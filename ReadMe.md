@@ -27,7 +27,7 @@ yarn add stylis-at-queries
 ## Usage
 
 ### Configure
-To use `stylis-at-queries` with styled-components, import and add it as a plugin to the StyleSheetManager when creating your styled-components theme:
+To integrate `stylis-at-queries` with styled-components, incorporate it as a plugin within the StyleSheetManager. During initialization, you have the flexibility to include theme configurations. This approach allows seamless access to theme settings in both the query processor and within styled components, ensuring cohesive styling across your application.
 
 ```javascript
 import { createGlobalStyle, StyleSheetManager } from 'styled-components';
@@ -42,7 +42,7 @@ const theme = {
   /* Your theme configuration */
 };
 
-const atQueries = stylisAtQueries();
+const atQueries = stylisAtQueries(theme);
 
 const App = () => (
   <>
@@ -95,9 +95,10 @@ const theme = {
   /* Your theme configuration */
 };
 
-const atQueries = stylisAtQueries();
+const atQueries = stylisAtQueries(theme);
 atQueries.add('@screenSize', (element, content) => {
   // Custom transformation logic
+  return ``
 });
 
 const App = () => (
